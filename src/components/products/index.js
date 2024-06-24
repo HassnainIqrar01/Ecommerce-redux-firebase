@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import {getAllProducts, getProductsByCategory, addToCart} from '../apis';
+import {getAllProducts, getProductsByCategory} from '../apis';
 import { Card, List, Image, Typography, Select, message, Button } from "antd";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCart } from '../redux/actions/cartActions';
 
 import React from 'react'
 
 const Products = () => {
   const [items, setItems] = useState([]);
-  const [sortOrder, setSortOrder] = useState('az');
+  const [sortOrder, setSortOrder] = useState('');
   const param = useParams();
   useEffect(() => {
     (param?.categoryId
@@ -18,7 +20,7 @@ const Products = () => {
     });
   }, [param]);
 
-
+const Text = Typography;
 
   const getSortedItems=()=> {
     const sortedItems = [...items]
@@ -41,8 +43,9 @@ const Products = () => {
 
   return (  
   <div className="productsContainer">
+   
      <div>
-        <Typography.Text>View Items Filtered By: </Typography.Text>
+        <Text.Text>View Items Filtered By: </Text.Text>
         <Select
           onChange={(value) => {
             setSortOrder(value)
@@ -71,33 +74,36 @@ const Products = () => {
       <List 
       grid={{column: 3}}
       renderItem={(products, index) => {
-        return <Card className="itemCard" title={products.title} key={index} 
+        return (
+        <Card className="itemCard" title={products.title} key={index} 
         cover={<Image className="itemCardImage" src={products.thumbnail} />} 
           actions={[
-                  <AddToCartButton item={products} />
+                  <AddToCartButton item={products} />,
+                  <Link to={`/products/${products.id}`}>View Details</Link>
                 ]}>
            <Card.Meta
                   title={
-                    <Typography.Paragraph>
+                    <Text.Paragraph>
                       Price: ${products.price}{" "}
-                      <Typography.Text delete type="danger">
+                      <Text.Text delete type="danger">
                         $
                         {parseFloat(
                           products.price +
                             (products.price * products.discountPercentage) / 100
                         ).toFixed(2)}
-                      </Typography.Text>
-                    </Typography.Paragraph>
+                      </Text.Text>
+                    </Text.Paragraph>
                   }
                   description={
-                    <Typography.Paragraph
+                    <Text.Paragraph
                       ellipsis={{ rows: 2, expandable: true, symbol: "See more" }}
                     >
                       {products.description}
-                    </Typography.Paragraph>
+                    </Text.Paragraph>
                   }
                 ></Card.Meta>
         </Card>
+        )
       }}
       dataSource={getSortedItems()}
       ></List>
@@ -106,18 +112,17 @@ const Products = () => {
 }
 
 function AddToCartButton({ item }) {
+  const dispatch = useDispatch();
+  const userEmail = useSelector((state) => state.user.email);
+
   const addProductToCart = () => {
-    addToCart(item.id).then((res) => {
-      message.success(`${item.title} added to cart!`);
-    });
+ 
+    dispatch(addToCart(item, userEmail));
+    message.success(`${item.title} added to cart!`);
   };
+
   return (
-    <Button
-      type="link"
-      onClick={() => {
-        addProductToCart();
-      }}
-    >
+    <Button type="link" onClick={addProductToCart}>
       Add to Cart
     </Button>
   );
