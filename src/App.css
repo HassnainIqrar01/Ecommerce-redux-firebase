@@ -93,6 +93,7 @@
 
 .error {
   color: red;
+  margin-top: 9px;
   font-size: 12px;
 }
 .buttons {
@@ -103,4 +104,28 @@
 }
 .signupText {
   margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+.butt {height: 2rem;
+  background-color: green;
+  border-color: green;
+  border-radius: 20px;
+  color: white;
+  font-weight: bolder;
+}
+.values {
+  height: 40px;
+  width: 700px;
+  margin-top: 7px;
+  border-radius: 10px;
+}
+.addPformContainer{
+  width: 800px;
+  height: auto;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #f9f9f9;
 }

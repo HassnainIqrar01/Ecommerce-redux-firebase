@@ -35,16 +35,15 @@ const ProductDetails = () => {
             >
                 <Card.Meta
                     title={
-                        <Paragraph>
-                            Price: ${product.price}{" "}
-                            <Text delete type="danger">
-                                $
-                                {parseFloat(
-                                    product.price +
-                                    (product.price * product.discountPercentage) / 100
-                                ).toFixed(2)}
-                            </Text>
-                        </Paragraph>
+               <Paragraph>
+                Price: ${product.price}{" "}
+               <Text delete type="danger">$
+                 {parseFloat(
+                 product.price +
+                 (product.price * product.discountPercentage) / 100
+                 ).toFixed(2)}
+             </Text>
+              </Paragraph>
                     }
                     description={<Paragraph>{product.description}</Paragraph>}
                 />

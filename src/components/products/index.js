@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {getAllProducts, getProductsByCategory} from '../apis';
-import { Card, List, Image, Typography, Select, message, Button } from "antd";
+import { Card, List, Image, Typography, Select } from "antd";
 import { useParams, Link } from "react-router-dom";
-import { useDispatch, useSelector } from 'react-redux';
-import { addToCart } from '../redux/actions/cartActions';
-
+import { AddToCartButton } from "./addToCart";
 import React from 'react'
+
+const { Text, Paragraph } = Typography;
 
 const Products = () => {
   const [items, setItems] = useState([]);
@@ -19,8 +19,6 @@ const Products = () => {
       setItems(res.products);
     });
   }, [param]);
-
-const Text = Typography;
 
   const getSortedItems=()=> {
     const sortedItems = [...items]
@@ -45,7 +43,7 @@ const Text = Typography;
   <div className="productsContainer">
    
      <div>
-        <Text.Text>View Items Filtered By: </Text.Text>
+        <Text>View Items Filtered By: </Text>
         <Select
           onChange={(value) => {
             setSortOrder(value)
@@ -83,23 +81,23 @@ const Text = Typography;
                 ]}>
            <Card.Meta
                   title={
-                    <Text.Paragraph>
+                    <Paragraph>
                       Price: ${products.price}{" "}
-                      <Text.Text delete type="danger">
+                      <Text delete type="danger">
                         $
                         {parseFloat(
                           products.price +
                             (products.price * products.discountPercentage) / 100
                         ).toFixed(2)}
-                      </Text.Text>
-                    </Text.Paragraph>
+                      </Text>
+                    </Paragraph>
                   }
                   description={
-                    <Text.Paragraph
+                    <Paragraph
                       ellipsis={{ rows: 2, expandable: true, symbol: "See more" }}
                     >
                       {products.description}
-                    </Text.Paragraph>
+                    </Paragraph>
                   }
                 ></Card.Meta>
         </Card>
@@ -109,23 +107,6 @@ const Text = Typography;
       ></List>
     </div>
   )
-}
-
-function AddToCartButton({ item }) {
-  const dispatch = useDispatch();
-  const userEmail = useSelector((state) => state.user.email);
-
-  const addProductToCart = () => {
- 
-    dispatch(addToCart(item, userEmail));
-    message.success(`${item.title} added to cart!`);
-  };
-
-  return (
-    <Button type="link" onClick={addProductToCart}>
-      Add to Cart
-    </Button>
-  );
 }
 
 export default Products

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { Button, Input, Typography, message } from 'antd';
+import { Button, Input, Typography, message, Spin } from 'antd';
 import { doSignInWithEmailAndPassword } from '../auth';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch} from 'react-redux';
@@ -18,8 +18,10 @@ const LoginSchema = Yup.object().shape({
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false); 
 
   const handleLogin = async (values, { setSubmitting }) => {
+    setIsLoading(true);
     try {
       const userCredential = await doSignInWithEmailAndPassword(values.email, values.password);
       const user = userCredential.user;
@@ -30,9 +32,10 @@ const Login = () => {
     } catch (error) {
       message.error(`Login failed: ${error.message}`);
     }
+    setIsLoading(false);
     setSubmitting(false);
   };
-
+ 
   return (
     <div className="formContainer">
       <Title level={2}>Login</Title>
@@ -53,11 +56,13 @@ const Login = () => {
               <Field as={Input.Password} name="password" />
               <ErrorMessage name="password" component="div" className="error" />
             </div>
-            <Button type="primary" htmlType="submit" >
-              Login
+            <Button type="primary" htmlType="submit" disabled={isLoading}>
+              {isLoading ? <Spin /> : 'Login'}
             </Button>
             <div className='signupText'>
               <Link to="/signup">Don't Have an Account? Sign Up Now</Link>
+              <Link to="/reset-password">Forgot Password?</Link>
+              <Link to="/change-password">Change Password</Link>
             </div>
           </Form>
       </Formik>

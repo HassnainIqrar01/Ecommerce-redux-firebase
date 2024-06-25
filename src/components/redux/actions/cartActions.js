@@ -1,5 +1,6 @@
-import { ref, set } from "firebase/database";
+import { ref, set, get } from "firebase/database";
 import { database } from '../../../firebase.config'; 
+import { sanitizeEmailForPath } from '../../../utils';
 
 export const ADD_TO_CART = 'ADD_TO_CART';
 export const INCREMENT_QUANTITY = 'INCREMENT_QUANTITY';
@@ -14,9 +15,8 @@ export const loadCartFromFirebase = (userEmail) => async (dispatch) => {
     console.error('User email is not available');
     return;
   }
-
-  const sanitizedEmail = userEmail.replace('.', '_');
-  const cartRef = ref(database, `carts/${sanitizedEmail}`);
+  const sanitizedEmail = sanitizeEmailForPath(userEmail);
+        const cartRef = ref(database, `carts/${sanitizedEmail}`);
 
   try {
     const snapshot = await get(cartRef);
@@ -30,6 +30,7 @@ export const loadCartFromFirebase = (userEmail) => async (dispatch) => {
     console.error('Error loading cart from Firebase', error);
   }
 };
+
 export const clearCart = () => ({
   type: CLEAR_CART,
 });
@@ -37,28 +38,28 @@ export const clearCart = () => ({
 
 export const addToCart = (item, userEmail) => (dispatch) => {
   dispatch({ type: ADD_TO_CART, payload: item });
-  dispatch(saveCartToFirebase(userEmail));
+  dispatch(saveCartToFirebase(sanitizeEmailForPath(userEmail)));
 };
 
 export const incrementQuantity = (itemId, userEmail) => (dispatch) => {
   dispatch({ type: INCREMENT_QUANTITY, payload: itemId });
-  dispatch(saveCartToFirebase(userEmail));
+  dispatch(saveCartToFirebase(sanitizeEmailForPath(userEmail)));
 };
 
 export const decrementQuantity = (itemId, userEmail) => (dispatch) => {
   dispatch({ type: DECREMENT_QUANTITY, payload: itemId });
-  dispatch(saveCartToFirebase(userEmail));
+  dispatch(saveCartToFirebase(sanitizeEmailForPath(userEmail)));
 };
 
 export const removeFromCart = (itemId, userEmail) => (dispatch) => {
   dispatch({ type: REMOVE_FROM_CART, payload: itemId });
-  dispatch(saveCartToFirebase(userEmail));
+  dispatch(saveCartToFirebase(sanitizeEmailForPath(userEmail)));
 };
 
 
 export const saveCartToFirebase = (userEmail) => (dispatch, getState) => {
   const cartItems = getState().cart.items;
-  const sanitizedEmail = userEmail.replace('.', '_');
+  const sanitizedEmail = sanitizeEmailForPath(userEmail);
   const cartRef = ref(database, `carts/${sanitizedEmail}`);
 
   set(cartRef, cartItems)

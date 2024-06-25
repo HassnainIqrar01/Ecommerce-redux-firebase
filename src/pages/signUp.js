@@ -1,12 +1,12 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { Button, Input, Typography, message } from 'antd';
+import { Button, Input, Typography, message, Spin } from 'antd';
 import { doCreateUserWithEmailAndPassword } from '../auth';
 import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
-
+ 
 const SignupSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
   email: Yup.string().email('Invalid email').required('Required'),
@@ -18,8 +18,9 @@ const SignupSchema = Yup.object().shape({
 
 const Signup = () => {
   const navigate = useNavigate();
-
+  const [isLoading, setIsLoading] = useState(false); 
   const handleSignup = async (values, { setSubmitting }) => {
+    setIsLoading(true);
     try {
       await doCreateUserWithEmailAndPassword(values.email, values.password);
       message.success('Signup successful!');
@@ -27,6 +28,7 @@ const Signup = () => {
     } catch (error) {
       message.error(`Signup failed: ${error.message}`);
     }
+    setIsLoading(false);
     setSubmitting(false);
   };
 
@@ -60,8 +62,8 @@ const Signup = () => {
               <Field as={Input.Password} name="confirmPassword" />
               <ErrorMessage name="confirmPassword" component="div" className="error" />
             </div>
-            <Button type="primary" htmlType="submit" >
-              Signup
+            <Button type="primary" htmlType="submit" disabled={isLoading} >
+            {isLoading ? <Spin /> : 'SignUp'}
             </Button>
           </Form>
       </Formik>

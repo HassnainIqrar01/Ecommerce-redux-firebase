@@ -20,11 +20,14 @@ function AppHeader() {
 const handleClick = () => {
 navigate(`/hit`)
 }
-const showDrawer = () => {
-  setDrawerOpen(true);
-};
-const closeDrawer = () => {
-  setDrawerOpen(false);
+const toAddProduct = () => {
+  navigate(`/add-product`)
+  }
+  const toDelProduct = () => {
+    navigate(`/del-product`)
+  }
+const toggleDrawer = () => {
+  setDrawerOpen(!drawerOpen);
 };
 const calculateTotal = () => {
   return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -99,24 +102,39 @@ const calculateTotal = () => {
       
       <Button
         type="primary"
-        style={{ backgroundColor: 'green', borderColor: 'green' }}
+        style={{backgroundColor: 'green', borderColor: 'green'}}
         onClick={handleClick}
       >
         Search your Product!
       </Button>
      
+      <Button
+        type="primary"
+        style={{backgroundColor: 'green', borderColor: 'green'}}
+        onClick={toAddProduct}
+      >
+        Add Product
+      </Button>
+
+      <Button
+        type="primary"
+        style={{backgroundColor: 'green', borderColor: 'green'}}
+        onClick={toDelProduct}
+      >
+        Delete Product
+      </Button>
      
       <div className="cartIcon">
       <div className="buttons">
       <Button
         type="primary"
-        style={{ backgroundColor: 'red', borderColor: 'black' }}
+        style={{backgroundColor: 'red', borderColor: 'black'}}
         onClick={handleLogout}
       >
         Logout
       </Button>
       </div>
-      <div onClick={showDrawer}>
+      <div onClick={toggleDrawer}>
         <Badge count={cartItems.length} size="small">
           <ShoppingCartOutlined className="cartIconSize"/>
         </Badge>
@@ -124,7 +142,7 @@ const calculateTotal = () => {
       <Drawer
           title="Cart..."
           placement="right"
-          onClose={closeDrawer}
+          onClose={toggleDrawer}
           open={drawerOpen}
         >
           <ul>
