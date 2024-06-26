@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import {getAllProducts, getProductsByCategory} from '../apis';
-import { Card, List, Image, Typography, Select } from "antd";
+import { Card, List, Image, Typography, Select, Button } from "antd";
 import { useParams, Link } from "react-router-dom";
 import { AddToCartButton } from "./addToCart";
+import { incrementQuantity, decrementQuantity } from '../redux/actions/cartActions';
+import { useDispatch, useSelector } from "react-redux";
 import React from 'react'
 
 const { Text, Paragraph } = Typography;
@@ -11,6 +13,10 @@ const Products = () => {
   const [items, setItems] = useState([]);
   const [sortOrder, setSortOrder] = useState('');
   const param = useParams();
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state) => state.cart.items);
+  const userEmail = useSelector((state) => state.user.email);
+
   useEffect(() => {
     (param?.categoryId
       ? getProductsByCategory(param.categoryId)
@@ -38,6 +44,11 @@ const Products = () => {
     })
     return sortedItems;
   }
+
+  const getProductQuantity = (productId) => {
+    const item = cartItems.find((item) => item.id === productId);
+    return item ? item.quantity : 0;
+  };
 
   return (  
   <div className="productsContainer">
@@ -77,6 +88,14 @@ const Products = () => {
         cover={<Image className="itemCardImage" src={products.thumbnail} />} 
           actions={[
                   <AddToCartButton item={products} />,
+                  <Button
+                  onClick={() => dispatch(decrementQuantity(products.id, userEmail))}
+                    disabled={products.quantity <= 1}
+                >
+                  -
+                </Button>,
+                <span>{getProductQuantity(products.id)}</span>,
+                <Button onClick={() => dispatch(incrementQuantity(products.id, userEmail))}>+</Button>,
                   <Link to={`/products/${products.id}`}>View Details</Link>
                 ]}>
            <Card.Meta

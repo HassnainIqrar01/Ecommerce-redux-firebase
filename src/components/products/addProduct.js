@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useNavigate } from 'react-router-dom';
+import { ref, push } from 'firebase/database';
+import { database } from '../../firebase.config';
+import { Select } from 'antd';
 
 const AddProduct = () => {
-  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
 
   const initialValues = {
     title: '',
@@ -29,7 +31,7 @@ const AddProduct = () => {
       price: values.price,
       description: values.description,
       thumbnail: values.thumbnail,
-    };
+    }; 
 
     fetch('https://dummyjson.com/products/add', {
       method: 'POST',
@@ -41,9 +43,13 @@ const AddProduct = () => {
       .then(res => res.json())
       .then(response => {
         console.log(response);
+
+         const productsRef = ref(database, `products/${values.category}`);
+        push(productsRef, response);
+
+        setProducts(prevProducts => [...prevProducts, response]);
         setSubmitting(false);
         resetForm();
-        navigate('/category'); 
       })
       .catch(error => {
         console.error('Error adding product:', error);
@@ -59,7 +65,7 @@ const AddProduct = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ isSubmitting }) => (
+        {({isSubmitting,setFieldValue}) => (
           <Form>
             <div className="formItem">
               <label htmlFor="title">Title</label><br />
@@ -69,7 +75,17 @@ const AddProduct = () => {
 
             <div className="formItem">
               <label htmlFor="category">Category</label><br />
-              <Field className="values" type="text" name="category" placeholder="Enter Category" />
+              <Select
+                className="values"
+                name="category"
+                onChange={(value) => setFieldValue('category', value)}
+                placeholder="Select Category"
+              >
+                <Select.Option value="Fragrances">Fragrances</Select.Option>
+                <Select.Option value="Electronics">Electronics</Select.Option>
+                <Select.Option value="Kitchen">Kitchen</Select.Option>
+                <Select.Option value="Clothes">Clothes</Select.Option>
+              </Select>
               <ErrorMessage name="category" component="div" className="error" />
             </div>
 
@@ -86,17 +102,32 @@ const AddProduct = () => {
             </div>
 
             <div className="formItem">
-              <label htmlFor="thumbnail">Image URL</label> <br />
+              <label htmlFor="thumbnail">Image URL</label><br />
               <Field className="values" type="text" name="thumbnail" placeholder="Paste URL of image" />
               <ErrorMessage name="thumbnail" component="div" className="error" />
             </div>
 
-            <button className='butt' type="submit" disabled={isSubmitting}>
+            <button className="butt" type="submit" disabled={isSubmitting}>
               Add Product
             </button>
           </Form>
         )}
       </Formik>
+
+      {products.length > 0 && (
+        <div className="addedProductsList">
+          <h3>Added Products</h3>
+          {products.map((product, index) => (
+            <div key={index} className="addedProductInfo">
+              <p><strong>Title:</strong> {product.title}</p>
+              <p><strong>Category:</strong> {product.category}</p>
+              <p><strong>Price:</strong> ${product.price}</p>
+              <p><strong>Description:</strong> {product.description}</p>
+              <img src={product.thumbnail} alt={product.title} className="addedProductImg" />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

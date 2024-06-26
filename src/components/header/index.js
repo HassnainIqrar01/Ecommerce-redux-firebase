@@ -1,17 +1,25 @@
-import { HomeFilled, ShoppingCartOutlined, PlusOutlined, MinusOutlined, DeleteOutlined } from "@ant-design/icons";
-import { Menu, Badge, Drawer, Button } from "antd";
+import { HomeFilled, ShoppingCartOutlined, PlusOutlined, MinusOutlined, DeleteOutlined, OrderedListOutlined } from "@ant-design/icons";
+import { Menu, Badge, Drawer, Button, Select } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import { useState } from "react";
 import { incrementQuantity, decrementQuantity, removeFromCart, clearCart } from '../redux/actions/cartActions';
+import { addOrder } from "../redux/actions/orderActions";
 import { doSignOut } from "../../auth";
+import { ref, set } from 'firebase/database';
+import { database } from '../../firebase.config';
+import { sanitizeEmailForPath } from '../../utils';
 
 function AppHeader() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userEmail = useSelector((state) => state.user.email);
   const cartItems = useSelector((state) => state.cart.items);
+  const sanitizedEmail = sanitizeEmailForPath(userEmail);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [orderDrawerOpen, setOrderDrawerOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+  const [confirmedOrders, setConfirmedOrders] = useState([]);
 
   const onMenuClick = (item) => {
     navigate(`/${item.key}`);
@@ -29,6 +37,9 @@ const toAddProduct = () => {
 const toggleDrawer = () => {
   setDrawerOpen(!drawerOpen);
 };
+const toggleOrderDrawer = () => {
+  setOrderDrawerOpen(!orderDrawerOpen);
+};
 const calculateTotal = () => {
   return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 };
@@ -40,6 +51,21 @@ const calculateTotal = () => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const handleConfirmOrder = () => {
+    const order = {
+      items: cartItems,
+      total: calculateTotal(),
+      paymentMethod: paymentMethod
+    };
+    dispatch(addOrder(order, userEmail));
+    const orderRef = ref(database, `orders/${sanitizedEmail}`);
+    set(orderRef, order);
+
+    setConfirmedOrders([...confirmedOrders, order]);
+    dispatch(clearCart());
+    toggleDrawer(); 
   };
 
   return (
@@ -175,9 +201,52 @@ const calculateTotal = () => {
           <div className="cartTotal">
             Total: ${calculateTotal().toFixed(2)}
           </div>
-          <Button>Confirm Order! 
-          </Button>
+          <div className="paymentMethod">
+            <Select
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              placeholder="Select Payment Method"
+            >
+              <Select.Option value="Cash on Delivery">Cash on Delivery</Select.Option>
+              <Select.Option value="Online Payment">Online Payment</Select.Option>
+            </Select>
+          </div>
+ <Button className="confirmOrder" onClick={handleConfirmOrder}>
+  Confirm your Orders!
+ </Button>
         </Drawer>
+      
+      <div className='orders' onClick={toggleOrderDrawer}>
+        <Badge size="small">
+          <OrderedListOutlined className="cartIconSize"/>
+        </Badge>
+        <Drawer
+          title="Orders..."
+          placement="right"
+          onClose={toggleOrderDrawer}
+          open={orderDrawerOpen}
+        >
+
+<ul>
+              {confirmedOrders.map((order, index) => (
+                <li key={index} className="orderItem">
+                  <div className="orderDetails">
+                    <div className="total">Total: ${order.total.toFixed(2)}</div>
+                    <div className="subheading">Payment Method: {order.paymentMethod}</div>
+                    <div className="bold">Items:</div>
+                    <ul>
+                      {order.items.map((item) => (
+                        <li key={item.id}>
+                          {item.title} - ${item.price} x {item.quantity}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </li>
+              ))}
+            </ul>
+        </Drawer>
+      </div>
       </div>
     </div>
   );
