@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
-import {getAllProducts, getProductsByCategory, addToCart} from '../apis';
-import { Card, List, Image, Typography, Select, message, Button } from "antd";
-import { useParams } from "react-router-dom";
-
+import {getAllProducts, getProductsByCategory} from '../apis';
+import { Card, List, Image, Typography, Select, Button } from "antd";
+import { useParams, Link } from "react-router-dom";
+import { AddToCartButton } from "./addToCart";
+import { incrementQuantity, decrementQuantity } from '../redux/actions/cartActions';
+import { useDispatch, useSelector } from "react-redux";
 import React from 'react'
+
+const { Text, Paragraph } = Typography;
 
 const Products = () => {
   const [items, setItems] = useState([]);
-  const [sortOrder, setSortOrder] = useState('az');
+  const [sortOrder, setSortOrder] = useState('');
   const param = useParams();
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state) => state.cart.items);
+  const userEmail = useSelector((state) => state.user.email);
+
   useEffect(() => {
     (param?.categoryId
       ? getProductsByCategory(param.categoryId)
@@ -17,8 +25,6 @@ const Products = () => {
       setItems(res.products);
     });
   }, [param]);
-
-
 
   const getSortedItems=()=> {
     const sortedItems = [...items]
@@ -39,10 +45,16 @@ const Products = () => {
     return sortedItems;
   }
 
+  const getProductQuantity = (productId) => {
+    const item = cartItems.find((item) => item.id === productId);
+    return item ? item.quantity : 0;
+  };
+
   return (  
   <div className="productsContainer">
+   
      <div>
-        <Typography.Text>View Items Filtered By: </Typography.Text>
+        <Text>View Items Filtered By: </Text>
         <Select
           onChange={(value) => {
             setSortOrder(value)
@@ -71,56 +83,49 @@ const Products = () => {
       <List 
       grid={{column: 3}}
       renderItem={(products, index) => {
-        return <Card className="itemCard" title={products.title} key={index} 
+        return (
+        <Card className="itemCard" title={products.title} key={index} 
         cover={<Image className="itemCardImage" src={products.thumbnail} />} 
           actions={[
-                  <AddToCartButton item={products} />
+                  <AddToCartButton item={products} />,
+                  <Button
+                  onClick={() => dispatch(decrementQuantity(products.id, userEmail))}
+                    disabled={products.quantity <= 1}
+                >
+                  -
+                </Button>,
+                <span>{getProductQuantity(products.id)}</span>,
+                <Button onClick={() => dispatch(incrementQuantity(products.id, userEmail))}>+</Button>,
+                  <Link to={`/products/${products.id}`}>View Details</Link>
                 ]}>
            <Card.Meta
                   title={
-                    <Typography.Paragraph>
+                    <Paragraph>
                       Price: ${products.price}{" "}
-                      <Typography.Text delete type="danger">
+                      <Text delete type="danger">
                         $
                         {parseFloat(
                           products.price +
                             (products.price * products.discountPercentage) / 100
                         ).toFixed(2)}
-                      </Typography.Text>
-                    </Typography.Paragraph>
+                      </Text>
+                    </Paragraph>
                   }
                   description={
-                    <Typography.Paragraph
+                    <Paragraph
                       ellipsis={{ rows: 2, expandable: true, symbol: "See more" }}
                     >
                       {products.description}
-                    </Typography.Paragraph>
+                    </Paragraph>
                   }
                 ></Card.Meta>
         </Card>
+        )
       }}
       dataSource={getSortedItems()}
       ></List>
     </div>
   )
-}
-
-function AddToCartButton({ item }) {
-  const addProductToCart = () => {
-    addToCart(item.id).then((res) => {
-      message.success(`${item.title} added to cart!`);
-    });
-  };
-  return (
-    <Button
-      type="link"
-      onClick={() => {
-        addProductToCart();
-      }}
-    >
-      Add to Cart
-    </Button>
-  );
 }
 
 export default Products
