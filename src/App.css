@@ -182,3 +182,41 @@
 .orderItem {
 margin: 15px;
 }
+
+
+
+.tabList {
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  margin-top: 20px;
+}
+
+.tabList button {
+  padding: 10px;
+  margin-right: 5px;
+}
+
+.tabList .activeTab {
+  font-weight: bold;
+  border-bottom: 2px solid #000;
+}
+
+.tabContent {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.productItem {
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.productItem img {
+  max-width: 100px;
+  height: auto;
+}

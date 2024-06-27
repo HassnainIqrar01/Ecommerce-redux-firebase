@@ -1,92 +1,104 @@
-import React, {useState} from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import { ref, push } from 'firebase/database';
+import React, { useState, useEffect } from 'react';
+import { ref, onValue, set, remove } from 'firebase/database';
+import { Button } from 'antd';
 import { database } from '../../firebase.config';
+import Tabs from './tabs';
 
-const DeleteProduct = () => {
-  const [deletedProducts, setDeletedProducts] = useState([]);
+const Products = () => {
+  const [products, setProductsState] = useState([]);
+  const [deletedProducts, setDeletedProductsState] = useState([]);
 
-  const initialValues = {
-    id: '',
+  useEffect(() => {
+    const productsRef = ref(database, 'products');
+    const deletedProductsRef = ref(database, 'deletedProducts');
+
+    onValue(productsRef, (snapshot) => {
+      const data = snapshot.val();
+      const productList = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+      setProductsState(productList);
+    });
+
+    onValue(deletedProductsRef, (snapshot) => {
+      const data = snapshot.val();
+      const deletedProductList = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+      setDeletedProductsState(deletedProductList);
+    });
+  }, []);
+
+  const deleteProduct = async (product) => {
+    const productRef = ref(database, `products/${product.id}`);
+    const deletedProductsRef = ref(database, `deletedProducts/${product.id}`);
+
+    try {
+      await set(deletedProductsRef, product);
+      await remove(productRef);
+      setProductsState(prevProducts => prevProducts.filter(p => p.id !== product.id));
+      setDeletedProductsState(prevDeletedProducts => [...prevDeletedProducts, product]);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
   };
 
-  const validationSchema = Yup.object({
-    id: Yup.number().required('required').positive('Product ID must be positive').integer('Product ID must be integer'),
-  });
+  const restoreProduct = async (product) => {
+    const deletedProductRef = ref(database, `deletedProducts/${product.id}`);
+    const productsRef = ref(database, `products/${product.id}`);
 
-  const handleSubmit = (values, { setSubmitting, resetForm })=> {
-    const productId = values.id;
-
-    fetch(`https://dummyjson.com/products/${productId}`)
-      .then((res) => res.json())
-      .then((product) => {
-      
-        const deletedProductsRef = ref(database, 'deletedProducts');
-        push(deletedProductsRef, product);
-
-      
-        setDeletedProducts((prevDeletedProducts) => [...prevDeletedProducts, product]);
-
-        return fetch(`https://dummyjson.com/products/${productId}`, {
-          method: 'DELETE',
-        });
-      })
-      .then((res) => res.json())
-      .then((response) => {
-        console.log(response);
-        setSubmitting(false);
-        resetForm();
-      })
-      .catch(error=>{
-        console.error('Error deleting product:', error);
-        setSubmitting(false);
-      });
-  };
-
-  const clearDeletedProducts = () => {
-    setDeletedProducts([]);
+    try {
+      await set(productsRef, product);
+      await remove(deletedProductRef);
+      setDeletedProductsState(prevDeletedProducts => prevDeletedProducts.filter(p => p.id !== product.id));
+      setProductsState(prevProducts => [...prevProducts, product]);
+    } catch (error) {
+      console.error('Error restoring product:', error);
+    }
   };
 
   return (
-    <div className="addPformContainer">
-      <h2>Delete Product</h2>
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
+    <div>
+      <Tabs>
+        <div label="All Products">
+          <div className="productList">
+            {products.map(product => (
+              <div key={product.id} className="productItem">
+                <img src={product.thumbnail} alt={product.title} />
+                <p>Name: {product.title}</p>
+                <p>Desc: {product.description}</p>
+                <p>Price: ${product.price}</p>
+               
+                <Button
+        type="primary"
+        className='butt'
+        onClick={() => deleteProduct(product)}
       >
-        {({ isSubmitting }) => (
-          <Form>
-            <div className="formItem">
-              <label htmlFor="id">Product ID</label><br />
-              <Field className="values" type="number" name="id" placeholder="Enter Product ID" />
-              <ErrorMessage name="id" component="div" className="error" />
-            </div>
-
-            <button className='butt' type="submit" disabled={isSubmitting}>
-              Delete Product
-            </button>
-          </Form>
-        )}
-      </Formik>
-      <button className="butt" onClick={clearDeletedProducts}>
-        Clear Deleted Products
-      </button>
-      {deletedProducts.length > 0 && (
-        <div className="deletedProductList">
-          <h3>Deleted Products</h3>
-          {deletedProducts.map((product, index) => (
-            <div key={index} className="deletedProductInfo">
-              <img src={product.thumbnail} alt={product.title} />
-              <p>Name: {product.title}</p>
-              <p>Price: ${product.price}</p>
-            </div>
-          ))}
+        Delete Product
+      </Button>
+              </div>
+            ))}
+          </div>
         </div>
-      )}
+        
+        <div label="Deleted Products">
+          <div className="productList">
+            {deletedProducts.map(product => (
+              <div key={product.id} className="productItem">
+                <img src={product.thumbnail} alt={product.title} />
+                <p>Name: {product.title}</p>
+                <p>Desc: {product.description}</p>
+                <p>Price: ${product.price}</p>
+                <Button
+        type="primary"
+        className='butt'
+        onClick={() => restoreProduct(product)}
+      >
+        Restore Product
+      </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Tabs>
     </div>
   );
 };
 
-export default DeleteProduct;
+export default Products;

@@ -32,26 +32,16 @@ const AddProduct = () => {
       description: values.description,
       thumbnail: values.thumbnail,
     }; 
-
-    fetch('https://dummyjson.com/products/add', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    })
-      .then(res => res.json())
-      .then(response => {
-        console.log(response);
-
-         const productsRef = ref(database, `products/${values.category}`);
-        push(productsRef, response);
-
-        setProducts(prevProducts => [...prevProducts, response]);
+    const productsRef = ref(database, 'products');
+    
+    push(productsRef, formData)
+      .then((response) => {
+        console.log('Product added to Firebase:', response);
+        setProducts((prevProducts) => [...prevProducts, formData]);
         setSubmitting(false);
         resetForm();
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Error adding product:', error);
         setSubmitting(false);
       });
